@@ -1,0 +1,47 @@
+function mtp(ch)
+    return (1/((99/ch)-1)*1.02)+1
+end
+
+function bet(bl,bm,ch,mt)
+    py = 99/ch
+    --mt = (1/(py-1))+1 
+    --bm = math.ceil(py*bh)
+    return bl/(math.exp(math.log(mt)*bm)/(mt-1))
+end
+
+basebet    = 0.00000018
+nextbet    = basebet
+chance     = 88
+multi      = 1
+ctwin      = 0
+ctlose     = 0
+lastchance = 88
+balstart   = balance
+
+function dobet()
+    if win then
+        if lastchance < 50 then
+            print("chance "..lastchance)
+            print("streak "..ctlose)
+            print("")
+        end
+        ctwin   = ctwin + 1
+        chance  = 88
+        nextbet = basebet
+        multi   = 1
+        if (ctwin == 20) then
+            chance  = math.random(15,25) 
+            multi   = mtp(chance) 
+            nextbet = bet(balstart,30,chance,multi) 
+            print("") 
+            print(string.format("%.8f",nextbet)) 
+            --print("") 
+        end
+    else
+        ctwin      = 0
+        nextbet    = previousbet * multi
+        ctlose     = math.abs(currentstreak)
+    end
+    lastchance = chance
+    nextbet    = math.max(nextbet,basebet)
+end
