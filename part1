@@ -1,0 +1,66 @@
+profitc = 0
+maxlose = 51
+stopwin = false
+sesipf  = 0 
+
+
+minbet  = 6e-5
+basebet = 0.0000019 * balance
+nextbet = basebet
+startch = 13.7
+chance  = startch
+ctlose  = 45
+ctwin   = 0
+bethigh = false
+nextbet = math.max(nextbet,minbet)
+target  = balance * 1.1
+resetseed()
+function dobet()
+    sleep(40)
+    sesipf  = sesipf + currentprofit
+    profitc = profitc + currentprofit
+    if profitc > 0 then
+        profitc = 0
+        if stopwin then stop() end
+    end
+
+    if balance > target then
+        print("")
+        print("+" .. string.format("%.8f", sesipf))
+        print("")
+        stop()
+        start()
+    end
+    if bets % 500 == 0 then
+        resetseed()
+    end
+
+    if win then
+        ctwin = ctwin + 1
+        if ctwin % 1 == 0 then
+            ctwin = 0
+            chance = chance + 1
+        end
+        if previousbet > 0.0000001 then
+            nextbet = basebet
+        else
+            if ctlose >= 45 then
+                nextbet = previousbet / 2
+            else
+                nextbet = previousbet
+            end
+        end
+        ctlose = 0
+    else
+        ctlose = ctlose + 1
+        if bets % 2 == 0 then
+            nextbet = previousbet * math.random(125, 200) / 100
+        end
+        if currentstreak < -maxlose then stopwin = true end
+    end
+    if chance > 15 then
+        bethigh = not bethigh
+        chance = math.random(startch * 100, (startch + 1) * 100) / 100
+    end
+    nextbet = math.max(nextbet,minbet)
+end
