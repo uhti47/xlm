@@ -1,0 +1,42 @@
+minbet  = 1e-8 --balance/1e5
+basebet = balance/6e7
+chance  = 14.9
+multi   = 1.5
+xstreak = 19
+rstreak = 30
+profitc = 0
+onrecov = false
+chancef = chance
+nextbet = basebet
+
+function dobet()
+    if profit >= 6.2 then stop() end
+    profitc = profitc+currentprofit
+    if win then
+        nextbet = basebet
+        chance  = chancef
+        if profitc > 0 then
+            onrecov = false
+            profitc = 0
+            chance  = 48
+        end
+    else
+        if chance > 50 then chance = chancef end
+        if onrecov then
+            chance  = chance* 1.03
+            nextbet = (betload+0.08)/((95/chance)-1)
+            betload = betload+nextbet
+        else
+            streak  = math.abs(currentstreak)
+            nextbet = previousbet*multi
+            if (streak == xstreak) then 
+                betload = nextbet 
+                onrecov = true 
+            end 
+            if (streak == rstreak) then 
+                resetseed()
+            end
+        end
+    end
+    nextbet = math.max(nextbet,minbet)
+end
