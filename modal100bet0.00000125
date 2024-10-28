@@ -1,4 +1,4 @@
-basebet = balance/1e5 --0.009 -- sesuaikan basebet
+basebet = balance/125e6 --0.009 -- sesuaikan basebet
 chance  = 16.9
 multi   = 1.5
 xstreak = 16
