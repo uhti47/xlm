@@ -1,0 +1,102 @@
+-- Function to initialize betting parameters
+function betset(p, s)
+    mxstreak = math.ceil(p * (6 + s))
+    lmlose = math.ceil(p * 3)
+    multi = (1 / (p - 1) * 1.5) + 1
+    base = balance / (math.exp(math.log(multi) * mxstreak) / (multi - 1))
+    chance = 99 / p
+    mxlose = 0
+end
+
+-- Function to implement a countdown timer
+function countdown(n)
+    for i = n, 1, -1 do
+        print(i .. "..")
+        sleep(1000)  -- Assuming a sleep function exists
+    end
+end
+
+-- Initialize global variables
+minbet = 1e-8
+payoutf = {5, 10, 5}
+payout = 5
+target = balance * 2
+ctlose = 0
+sesi = 1
+rsesi = 1
+balst = balance
+
+-- Initial bet setting
+betset(payout, sesi - 1)
+nextbet = base
+
+-- Function to handle each bet
+function dobet()
+    if balance > target then stop() end
+    if win then
+        if mxlose >= lmlose then
+            bethigh = not bethigh
+            payout = payout - (payout * (payoutf[3] / 100))
+            if payout < payoutf[1] then
+                payout = payoutf[2]
+                sesi = sesi + 1
+                print("\n\n NEW SESSION \n\n")
+                countdown(10)
+            end
+            betset(payout, sesi - 1)
+        end
+        ctlose = 0
+    else
+        ctlose = ctlose + 1
+    end
+
+    if ctlose > mxlose then
+        mxlose = ctlose
+    end
+
+    if bets % 3 == 0 then
+        displayinfo()
+    end
+
+    nextbet = base * (multi ^ ctlose)
+    if nextbet < minbet then
+        rsesi = rsesi + 1
+        sesi = 1
+        payout = 5
+        ctlose = 0
+        betset(payout, sesi - 1)
+    end
+end
+
+-- Function to display information about the betting session
+function displayinfo()
+    wagered = wagered + previousbet
+    if balance > mxbalance then
+        if stopwin then stop() end
+        mxbalance = balance
+    end
+
+    if nextbet > mxbet then mxbet = nextbet end
+    riskbet = (mxbet / stbalance) * 100
+    drop = (mxbalance - balance) / mxbalance * 100
+    if drop > mxdrop then mxdrop = drop end
+    if mxdrop > stopatdrop then stopwin = true end
+
+    print("")
+    print(" █-□ Session  \t [ " .. rsesi .. "/" .. sesi .. " ]")
+    print(" █-□ Profit   \t [ " .. string.format("%.8f", balance - stbalance) .. "\t" .. string.format("%.2f", (balance - stbalance) / stbalance * 100) .. "% ]")
+    print(" █-□ Target   \t [ " .. string.format("%.8f", balance - target) .. " ]")
+    print(" █-□ Streak   \t [ (" .. mxlose .. "/" .. lmlose .. ") / max: " .. mxstreak .. "x ]")
+    print(" █-□ Riskbet  \t [ " .. string.format("%.2f", riskbet) .. "% ]\t")
+    print(" █-□ Drop     \t [ " .. string.format("%.2f", drop) .. "% ]\t")
+    print(" █-□ Deep     \t [ " .. string.format("%.2f", mxdrop) .. "% / " .. string.format("%.2f", stopatdrop) .. "% ]\t")
+    print(" █-□ RakeBack \t [ " .. string.format("%.8f", wagered * 0.01 * rakelevel) .. " ]\t")
+    print(" █-□ Wagered  \t [ " .. string.format("%.8f", wagered) .. " ]\t")
+end
+
+-- Initialize additional global variables
+stopwin = false
+stopatdrop = 20
+rakelevel = 0.12
+wagered, mxdrop, mxbet = 0, 0, 0
+mxbalance, stbalance = balance, balance
