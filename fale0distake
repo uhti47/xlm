@@ -1,0 +1,216 @@
+--
+
+ratio_win = 80 --%
+minbet    = 1e-7
+fale      = 1e-8
+tg        = balance
+
+
+playgame = "dice"
+
+resetstats()
+resetchart()
+
+bethigh = false 
+inject = false
+
+ls = 0
+betz = 0
+winz = 0
+fake_ls = 0
+rate_wins = 0
+
+start_balance = balance
+
+chance_winrate = 50.01
+chance_rhigh = 1e2 - chance_winrate
+chance_rlow = chance_winrate
+
+function chance_roll(previous_random)
+    local previous = previous_random
+    local function c_random(n)
+        local ch
+        repeat
+            ch = math.random(99)
+        until 1e2 % ch == 0 and ch ~= n
+        return ch
+    end
+    previous_random = c_random(previous)
+    chance_bet = previous_random + 1e-2
+    chance_wager = 1e2 - previous_random
+    payout = (99 / previous_random) - 1
+    chance_high = 1e2 - previous_random
+    chance_low = previous_random
+    ls_max = math.floor(10001e-1 / previous_random) * ratio_win / 1e2
+    ls_trigger = math.floor(1001e-1 / previous_random)
+end
+
+function basebet_roll(fake_ls)
+    local function basebet(ls_div)
+        local x = payout
+        local a = 1
+        local sum = 1
+        for i = 1, ls_div do
+            local b = (a / x) + a
+            a = b
+            sum = sum + a
+        end
+        return start_balance / sum
+    end
+    ls_div =  ls_max - fake_ls
+    hunting_basebet = basebet(ls_div)
+end
+
+function hunting(n)
+    if (n < 1) then
+        chance          = chance_wager
+        hunting_nextbet = fale
+    else
+        n = n - fake_ls
+        chance = chance_bet
+        hunting_nextbet = hunting_basebet
+    end
+    local x = payout
+    local a = 1
+    for i = 1, n do
+        local b = (a / x) + a
+        a = b
+    end
+    return tonumber(string.format("%.10f",(a * hunting_nextbet)))
+end
+
+function fake_hunting(n)
+    if (n < 1) then
+        fake_basebet = 1
+    end
+    local x = payout
+    local a = 1
+    for i = 1, n do
+        local b = (a / x) + a
+        a = b
+    end
+    return tonumber(string.format("%.10f",(a * fake_basebet)))
+end
+
+chance_roll(0)
+basebet_roll(0)
+nextbet = hunting(0)
+fake_nextbet = fake_hunting(0)
+previous_chance = chance
+
+function dobet() 
+    betz = betz + 1
+    if profit > tg then stop() end
+    if (bethigh) then
+        if (lastBet.Roll > chance_rhigh) then
+            winz = winz + 1
+            rate_wins = (winz * 10001) / (chance_winrate * betz)
+        end
+        if (previous_chance == chance_bet) then
+            if (lastBet.Roll > chance_high) then
+                chance_roll(previous_random)
+                fake_ls = 0
+                ls = 0
+                if (rate_wins > 1e2) then
+                    betz = 0
+                    winz = 0
+                    rate_wins = 0
+                    bethigh = not bethigh
+                    resetclientseed()
+                end
+            else
+                ls = ls + 1
+            end
+        else
+            if (lastBet.Roll > chance_high) then
+                chance_roll(previous_random)
+                fake_ls = 0
+                if (rate_wins > 1e2) then
+                    betz = 0
+                    winz = 0
+                    rate_wins = 0
+                    bethigh = not bethigh
+                    resetclientseed()
+                end
+            else
+                fake_ls = fake_ls + 1
+                if (fake_ls >= ls_trigger) then
+                    if (not win) then
+                        basebet_roll(fake_ls)
+                        ls = fake_ls
+                    end
+                end
+            end
+        end
+    else
+        if (lastBet.Roll < chance_rlow) then
+            winz = winz + 1
+            rate_wins = (winz * 10001) / (chance_winrate * betz)
+        end
+        if (previous_chance == chance_bet) then
+            if (lastBet.Roll < chance_low) then
+                chance_roll(previous_random)
+                fake_ls = 0
+                ls = 0
+                if (rate_wins > 1e2) then
+                    betz = 0
+                    winz = 0
+                    rate_wins = 0
+                    bethigh = not bethigh
+                    resetclientseed()
+                end
+            else
+                ls = ls + 1
+            end
+        else
+            if (lastBet.Roll < chance_low) then
+                chance_roll(previous_random)
+                fake_ls = 0
+                if (rate_wins > 1e2) then
+                    betz = 0
+                    winz = 0
+                    rate_wins = 0
+                    bethigh = not bethigh
+                    resetclientseed()
+                end
+            else
+                fake_ls = fake_ls + 1
+                if (fake_ls >= ls_trigger) then
+                    if (not win) then
+                        basebet_roll(fake_ls)
+                        ls = fake_ls
+                    end
+                end
+            end
+            
+        end
+    end
+    nextbet = hunting(ls)  
+    fake_nextbet = fake_hunting(fake_ls)
+    if (previous_chance == chance_bet) then
+        if (bethigh) then
+            print("Betting "..string.format("%.10f",nextbet).." at "..string.format(chance_bet).."%, "..string.format(ls).." losestreak chance to win, high")
+        else
+            print("Betting "..string.format("%.10f",nextbet).." at "..string.format(chance_bet).."%, "..string.format(ls).." losestreak chance to win, low")
+        end
+    else
+        if (bethigh) then
+            print("Fake Betting "..string.format("%.10f",fake_nextbet).." at "..string.format(chance_bet).."% chance, "..string.format(fake_ls).." losestreak to win, high")
+        else
+            print("Fake Betting "..string.format("%.10f",fake_nextbet).." at "..string.format(chance_bet).."% chance, "..string.format(fake_ls).." losestreak to win, low")
+        end
+    end
+    if (nextbet > balance) then 
+        inject = true
+        print("\nInject Balance and Resume..!!\n\n") 
+    end
+    if (partialprofit >= 0) then
+        resetpartialprofit()
+        if (inject) then
+            stop()
+        end
+    end
+    previous_chance  = chance
+    if chance > 98 then chance = 98 end
+    if nextbet < minbet and nextbet > fale then nextbet= fale end
+end
