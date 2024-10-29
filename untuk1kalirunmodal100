@@ -1,0 +1,57 @@
+basebet = balance/7e6 --0.009 -- sesuaikan basebet
+chance  = 9.5
+multi   = 1.35
+xstreak = 40
+prebet  = 10
+xreset  = 25
+onrecov = false
+onsleep = false
+chancef = chance
+nextbet = basebet
+ctwin   = 0
+
+function dobet()
+    if profit >= 5.5 then stop() end
+    if win then
+        nextbet = basebet
+        chance  += 3 --chancef
+        if (ctwin == 0) then
+            betload = math.abs(partialprofit)*1.01
+        end
+        ctwin+=1
+        if partialprofit > 0 then
+            if onsleep then
+                resetseed()
+                sleep(5000)
+                onsleep = false
+            end
+            resetpartialprofit()
+            ctwin   = 0
+            chance  = 88
+            onrecov = false 
+        end
+    else
+        if chance > 50 then chance = chancef end
+        if onrecov then
+            chance  = chance*1.05
+            nextbet = betload/((99/chance)-1)
+            betload = betload+nextbet
+        else
+            streak = math.abs(currentstreak)-prebet 
+            if (streak > 0) then
+                nextbet = previousbet*multi 
+                if (streak == xstreak) then  
+                    betload = nextbet  
+                    onrecov = true  
+                end  
+                if (streak == xreset) then  
+                    resetseed() 
+                end 
+            end
+        end
+        if (currentstreak < -xreset) then 
+            onsleep = true   
+        end   
+    end
+    nextbet = math.max(nextbet,basebet)
+end
