@@ -1,0 +1,73 @@
+balance = tonumber(balance) 
+minbet  = 1e-8 
+
+chanceuse   = {11,22,33,44,55} 
+basebet     = 0.0000001010 
+betmulti    = 100
+callset     = basebet*1e3 
+callrandom  = false 
+callbooster = false 
+oncall      = false 
+countbet    = 0 
+
+ifpause  = 0 
+ifdrop   = 10 
+ifprofit = 100 
+
+chance  = 85  
+nextbet = basebet 
+function dobet() 
+     
+    if nextbet > callset then 
+        if callrandom then 
+            oncall   = true 
+            countbet = math.random(3) 
+            nextbet  = nextbet+(nextbet*(betmulti/100)) 
+        end 
+        if callbooster then 
+            oncall   = true 
+            countbet = 1 
+            nextbet  = nextbet+(nextbet*(betmulti/100)) 
+        end 
+    end 
+     
+    if countbet > #chanceuse and not oncall then 
+        countbet = 1 
+        nextbet  = nextbet+(nextbet*(betmulti/100)) 
+    else 
+        countbet = countbet + 1 
+    end 
+     
+    chance = chanceuse[countbet] 
+    if partialprofit > 0 then 
+        nextbet = basebet 
+        oncall  = false 
+        resetpartialprofit() 
+    end 
+    manageRisk() 
+    print("++ "..incdrop..inmdrop..inpdrop) 
+    nextbet = math.max(nextbet,minbet) 
+end 
+
+function manageRisk() 
+
+    if balance > stbal and ifprofit > 0 then stop() end 
+    if balance > mbal then 
+        if stwin then stop() end 
+        if currentprofit/sbal*100 > ifpause and ifpause > 0 then pause() end 
+        mbal = balance 
+    end 
+    cdrop = mbal - balance 
+    mdrop = math.max(mdrop,cdrop) 
+    if cdrop/mbal*100 > ifdrop and ifdrop > 0 then stwin = true end 
+    incdrop = string.format(" [ %.8f ] ", cdrop) 
+    inmdrop = string.format(" [ %.8f ] ", mdrop) 
+    inpdrop = string.format(" [ %.2f ] ", mdrop/mbal*100) 
+end 
+
+
+info = "" 
+sbal,mbal = balance,balance 
+cdrop,mdrop = 0,0 
+stwin = false 
+stbal = balance+(balance*(ifprofit/100))
