@@ -1,6 +1,6 @@
 --Payjo versi  
 --Kanakamaya:  
-base = 0.000000140928  
+base = 0.0000000140928  
    
 pilose = 1.18   
    
@@ -8,9 +8,9 @@ palose = 1.29
    
 polose = 1.8   
    
-pwin = (0+(chance*0.07))   
+pwin = (0+(chance*0.05))   
    
-target = 0.002  
+target = 0.0002  
    
 opit = balance + 59   
 lose = 9000   
@@ -83,7 +83,7 @@ invprofit += currentprofit
    
   if balance > tprofit then stop()   
    
-    print ("Anda take PROFIT Bro")   
+    print ("Dikit lagi JP")   
    
 end   
    
