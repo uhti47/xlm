@@ -12,7 +12,7 @@ pwin = (0+(chance*0.05))
    
 target = 0.0002  
    
-opit = balance + 59   
+opit = balance + 5   
 lose = 9000   
    
 speeds = 0.0   
