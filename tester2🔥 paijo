@@ -83,7 +83,7 @@ invprofit += currentprofit
    
   if balance > tprofit then stop()   
    
-    print ("Dikit lagi JP")   
+    print ("Anda DIKIT LAGI JP")   
    
 end   
    
