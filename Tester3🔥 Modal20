@@ -1,0 +1,127 @@
+-- Konfigurasi Strategi
+base_wagger  = 0.0000001    -- Base bet untuk wager 
+base_recov   = 0.00000009   -- Base bet untuk recovery 
+chmin_wagger = 97        -- Peluang minimum untuk wager 
+chmax_wagger = 98        -- Peluang maksimum untuk wager 
+chmin_recov  = 0.09       -- Peluang minimum untuk recovery 
+chmax_recov  = 19        -- Peluang maksimum untuk recovery 
+mult_recov   = 1.15      -- Pengganda untuk recovery 
+
+-- Manajemen Modal
+basebet         = base_wagger 
+nextbet         = basebet 
+chance          = chmax_wagger   -- Peluang awal 
+seed            = 300            -- Reset seed 
+target_profit   = balance * 1.5  -- Target profit 20% dari saldo awal
+loss_limit      = balance * 0.1     -- Batas kerugian 10% dari saldo awal
+daily_bet_limit = balance * 0.2 -- Batas jumlah taruhan harian 20% dari saldo awal
+total_bet_today = 0             -- Jumlah total taruhan hari ini
+
+-- Variabel untuk Pemantauan Historis
+historical_results = {}
+
+-- Fungsi untuk Memperbarui Historis
+function update_historical_results(result)
+    table.insert(historical_results, result)
+end
+
+-- Strategi Taruhan Alternatif
+function alternative_strategy()
+    -- Implementasi strategi taruhan alternatif di sini
+    -- Contoh: Martingale Strategy
+    if win then
+        nextbet = basebet
+    else
+        nextbet = previousbet * 1.32
+    end
+end
+
+-- Adaptasi Dinamis
+function dynamic_adaptation()
+    -- Implementasi adaptasi dinamis di sini
+    -- Contoh: Menyesuaikan base bet berdasarkan hasil taruhan sebelumnya
+    if #historical_results >= 10 then
+        local total_wins = 0
+        for _, result in ipairs(historical_results) do
+            if result then
+                total_wins = total_wins + 1
+            end
+        end
+        local win_rate = total_wins / #historical_results
+        if win_rate < 0.5 then
+            basebet = basebet * 0.5
+        elseif win_rate > 0.8 then
+            basebet = basebet * 1.5
+        end
+    end
+end
+
+-- Manajemen Risiko
+function risk_management()
+    -- Implementasi manajemen risiko di sini
+    -- Contoh: Menyesuaikan base bet berdasarkan saldo saat ini
+    if balance < loss_limit * 0.5 then
+        basebet = balance * 0.00001
+    elseif balance > loss_limit * 2 then
+        basebet = balance * 0.00005
+    end
+end
+
+-- Analisis Kinerja
+function performance_analysis()
+    -- Implementasi analisis kinerja di sini
+    -- Contoh: Menampilkan rasio kemenangan
+    local total_wins = 0
+    for _, result in ipairs(historical_results) do
+        if result then
+            total_wins = total_wins + 1
+        end
+    end
+    local win_rate = total_wins / #historical_results
+    print("Rasio Kemenangan: " .. win_rate)
+end
+
+-- Fungsi untuk menghitung taruhan berikutnya
+function calculate_next_bet()
+    if balance < loss_limit then
+        print("Batas kerugian tercapai. Menghentikan taruhan.")
+        -- stop()
+    end
+    if balance > target_profit then
+        print("Target profit tercapai. Menghentikan taruhan.")
+        stop()
+    end
+    if total_bet_today >= daily_bet_limit then
+        print("Batas jumlah taruhan harian tercapai. Menghentikan taruhan.")
+        --stop()
+    end
+    if win then
+        nextbet = base_wagger
+        chance  = math.random(chmin_wagger * 100, chmax_wagger * 100) / 100
+    else
+        nextbet = previousbet * mult_recov
+        chance = math.random(chmin_recov * 100, chmax_recov * 100) / 100
+        if currentstreak == -1 then
+            nextbet = base_recov
+        end
+    end
+end
+
+-- Fungsi untuk mencatat taruhan dan mengelola batasan harian
+function manage_daily_limits()
+    total_bet_today = total_bet_today + nextbet
+end
+
+-- Fungsi untuk melakukan taruhan
+function dobet()
+    if bets % seed == 0 then
+        resetseed()
+    end
+    calculate_next_bet()
+    manage_daily_limits()
+    update_historical_results(win)
+    alternative_strategy()
+    dynamic_adaptation()
+    risk_management()
+    performance_analysis()
+end
