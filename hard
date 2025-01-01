@@ -1,0 +1,77 @@
+-- Cenglay vs Phayjo 
+-- Wager Version 
+-- Edit By Forg
+
+chance  = 21  
+basebet = 1e-7
+nextbet = basebet  
+wcount  = 0  
+lcount  = 0  
+btarget = balance * 2000000  
+profitc = 0  
+
+A1 = 0.095 B1 = 96  
+A2 = 0.6 B2 = 46   
+A3 = 9   B3 = 39  
+A4 = 33  B4 = 43   
+A5 = 0.1 B5 = 25  
+A6 = 1.5 B6 = 35
+
+function dobet()  
+    local px = 100.0 
+     
+    if btarget <= balance then  
+        stop()  
+    end  
+     
+    if win then 
+        wcount = wcount + 1  
+        lcount = 0  
+    else  
+        if bets % 2 == 0 then  
+            nextbet = previousbet + (previousbet * 0.5)  
+        end  
+        lcount = lcount + 1    
+    end  
+     
+    if wcount == 1 then  
+        chance = 66 
+        wcount = 0  
+    end  
+     
+    if lcount == -1 then 
+        chance = math.random(A2 * px, B2 * px) / px 
+        if nextbet < basebet then  
+            nextbet = basebet 
+        end 
+    elseif lcount == 2 then 
+        chance = math.random(A3 * px, B3 * px) / px 
+    elseif lcount == 3 then 
+        chance = math.random(A4 * px, B4 * px) / px 
+    elseif lcount == 4 then 
+        chance = math.random(A5 * px, B5 * px) / px 
+    elseif lcount == 5 then 
+        chance = math.random(A4 * px, B4 * px) / px 
+    elseif lcount == 6 then 
+        chance = math.random(A5 * px, B5 * px) / px 
+    elseif lcount == 7 then 
+        chance = math.random(A6 * px, B6 * px) / px 
+    elseif lcount == 8 then 
+        chance = math.random(A4 * px, B4 * px) / px 
+    elseif lcount == 9 then 
+        chance = math.random(A3 * px, B3 * px) / px 
+    elseif lcount == 10 then 
+        chance = math.random(A3 * px, B3 * px) / px 
+    elseif lcount % 3 == 0 then 
+        chance = math.random(A3 * px, B3 * px) / px 
+        nextbet = previousbet * (1 + (chance / 60))  
+        lcount = 0 
+    end 
+     
+    profitc = profitc + lastBet.profit   
+    if profitc > 0 and win then   
+        profitc = 0   
+        nextbet = basebet   
+        chance  = 98 
+    end   
+end
